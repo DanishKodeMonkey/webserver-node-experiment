@@ -189,3 +189,21 @@ The contact-me page(/contact-me url)
 ETC.
 
 # CONGRATULATIONS! Were now serving our website! And learnt why it's called a "web server"
+
+## Bonus easter egg feature: Serving content like images and other files.
+
+Express can easily serve images and similar content alongside HTML pages, as long as it knows where it is.
+
+This can be done thanks to app.use
+
+We add a image to our image directory in the file strcuture (418.jpg in my case)
+
+![file structure 2](./images/Screenshot_20240422_151800.png)
+
+And we add app.use before any routing
+
+```javascript
+app.use(express.static(path.join(__dirname, 'images')));
+```
+
+Now we can server any files in the images directory along with our html in our HTTP response objects!
