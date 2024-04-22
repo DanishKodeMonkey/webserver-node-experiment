@@ -1,6 +1,7 @@
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const app = express();
 
 // Map up URL paths with corresponding file paths in an object.
 
@@ -13,7 +14,7 @@ const htmlFiles = {
 };
 
 // Create server
-const server = http.createServer((req, res) => {
+app.get('*', (req, res) => {
     // get request URL and matching HTML file
     const requestedUrl = req.url;
     const htmlFile = htmlFiles[requestedUrl] || './pages/404.html';
@@ -31,7 +32,7 @@ const server = http.createServer((req, res) => {
                 } else {
                     console.log('serving 404 html');
                     // otherwise, serve 404.html
-                    res.end(data);
+                    res.send(data);
                 }
             });
         } else {
@@ -45,6 +46,6 @@ const server = http.createServer((req, res) => {
 // start the server
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

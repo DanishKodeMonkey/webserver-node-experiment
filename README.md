@@ -1,10 +1,10 @@
 # web server node exercise
 
-An exercise in the use of node.js, setting up a web server.
+An exercise in the use of node.js, and express, setting up a web server.
 
-A short and simple web server deployed using a node.js web server solution.
+A short and simple web server deployed using a node.js/express web server solution.
 
-The process of setting up a web server using node.js can seem daunting at first, but the process can be straight forward using some appropriate techniques:
+The process of setting up a web server using node.js and express can seem daunting at first, but the process can be straight forward using some appropriate techniques:
 
 ## Step 1. The setup
 
@@ -22,11 +22,11 @@ With node and NPM set up, were now ready to begin installing packages!
 Now, in order to set up a basic web server, we needed two packages in particular:
 
 ```
-npm install http fs
+npm install express fs
 ```
 
--   The HTTP interfaces in Node.js are designed to support many features of the protocol which have been traditionally difficult to use. In particular, large, possibly chunk-encoded, messages. The interface is careful to never buffer entire requests or responses, so the user is able to stream data.
-    -- [More on the http package](https://nodejs.org/api/http.html)
+-   Express is the most popular Node web framework, and is the underlying library for a number of other popular Node web frameworks. It provides mechanisms like handling HTTP verbs at different URL paths, integrating view rendering engines, setting common web application settings like ports, and more.
+    -- [More on the express package](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/Introduction)
 
 -   The node:fs module enables interacting with the file system in a way modeled on standard POSIX functions.
     --[More on the fs package](https://nodejs.org/api/fs.html)
@@ -46,49 +46,67 @@ These html files are almost identical in their individual setup, only the body h
 
 ## Step 3. the web server
 
+When incorporating express into the process, we effectively forego the manual setup and use of setting up the server, and allow express to handle the HTTP requests and responses.
+
 In order to start our new amazing website we need to serve them to the user, hence the web server.
 
 Thanks to the leveraging of node.js we can do this in javascript!
 
+And thanks to express, the whole process have been made even simpler!
+
 So we make a index.js file in the root of our project (see image in step 2) and write up the web server logic:
 
 ```javascript
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const app = express();
+
+// Map up URL paths with corresponding file paths in an object.
 
 const htmlFiles = {
+    // URL path - File path
     '/': './pages/index.html',
     '/contact-me': './pages/contact-me.html',
     '/about': './pages/about.html',
     '/404': './pages/404.html',
 };
 
-const server = http.createServer((req, res) => {
+// Create server
+app.get('*', (req, res) => {
+    console.log('app.get start', req, res);
+    // get request URL and matching HTML file
     const requestedUrl = req.url;
     const htmlFile = htmlFiles[requestedUrl] || './pages/404.html';
 
+    // Read the HTML file
     fs.readFile(path.join(__dirname, htmlFile), (err, data) => {
         if (err) {
+            // if file not found, serve 404.html
             res.writeHead(404, { 'Content-Type': 'text/html' });
             fs.readFile(path.join(__dirname, '404.html'), (err, data) => {
+                // if even this fails, just write it
                 if (err) {
                     console.log(`Error reading file ${htmlFile}`);
                     res.end('404 Not Found');
                 } else {
                     console.log('serving 404 html');
-                    res.end(data);
+                    // otherwise, serve 404.html
+                    res.send(data);
                 }
             });
         } else {
+            // serve the HTML file
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(data);
         }
     });
 });
 
+// start the server
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 ```
@@ -100,12 +118,15 @@ server.listen(PORT, () => {
 First of, we import the modules we got earlier first by requirement.
 
 ```javascript
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const app = express();
 ```
 
 This will allow us to reference these modules through the constants we have initialized.
+
+The last two constants in particular leverage the power of express, and establish an app using express, unlocking all the underlying methods to be used. So from this point, we will use app, to access all of express methods, and in turn, use the power of nodejs.
 
 ## 2. Connect URL pathing to corresponding file path
 
@@ -130,11 +151,13 @@ The main block of this logic pertains to the HTTP request/response logic
 
 #### 1. Initialize web server
 
-First, we set up a web
+in comparison to regular node.js, express will be handling all the work with passing HTTP and returning responses. So we use the app constant we created before to call it here with it's method "get"
 
 ```javascript
-const server = http.createServer((req, res) => {});
+app.get('*', (req, res) => {});
 ```
+
+app.get('\*') will tell express to handle all incoming HTTP requests and pass them along to the continueing function, thanks to the wildcart asterisk.
 
 Inside the arrow function we will handle the request/response (req, res) logic
 
