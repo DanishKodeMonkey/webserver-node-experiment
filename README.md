@@ -57,52 +57,27 @@ And thanks to express, the whole process have been made even simpler!
 So we make a index.js file in the root of our project (see image in step 2) and write up the web server logic:
 
 ```javascript
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
+const path = require('path');
 const app = express();
 
-// Map up URL paths with corresponding file paths in an object.
+// use app.get to define routes to the appropriate pages
+// the express methods will be chained where appropriate.
 
-const htmlFiles = {
-    // URL path - File path
-    '/': './pages/index.html',
-    '/contact-me': './pages/contact-me.html',
-    '/about': './pages/about.html',
-    '/404': './pages/404.html',
-};
-
-// Create server
-app.get('*', (req, res) => {
-    console.log('app.get start', req, res);
-    // get request URL and matching HTML file
-    const requestedUrl = req.url;
-    const htmlFile = htmlFiles[requestedUrl] || './pages/404.html';
-
-    // Read the HTML file
-    fs.readFile(path.join(__dirname, htmlFile), (err, data) => {
-        if (err) {
-            // if file not found, serve 404.html
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-            fs.readFile(path.join(__dirname, '404.html'), (err, data) => {
-                // if even this fails, just write it
-                if (err) {
-                    console.log(`Error reading file ${htmlFile}`);
-                    res.end('404 Not Found');
-                } else {
-                    console.log('serving 404 html');
-                    // otherwise, serve 404.html
-                    res.send(data);
-                }
-            });
-        } else {
-            // serve the HTML file
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-        }
-    });
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
+app.get('/contact-me', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'contact-me.html'));
+});
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'about.html'));
 });
 
+// A catch all using asterisk wild cart for 404 responses.
+app.get('*', (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
 // start the server
 
 const PORT = process.env.PORT || 3000;
@@ -128,123 +103,51 @@ This will allow us to reference these modules through the constants we have init
 
 The last two constants in particular leverage the power of express, and establish an app using express, unlocking all the underlying methods to be used. So from this point, we will use app, to access all of express methods, and in turn, use the power of nodejs.
 
-## 2. Connect URL pathing to corresponding file path
+## 2. use the express method from our app constant, app.get() to associate URLs with their assigned files.
 
-Create an object connecting each html file we created to a corresponding url path
+The process of linking our URL paths to our file paths have been made a whole lot simpler, thanks to express.
 
-```javascript
-const htmlFiles = {
-    '/': './pages/index.html',
-    '/contact-me': './pages/contact-me.html',
-    '/about': './pages/about.html',
-    '/404': './pages/404.html',
-};
-```
+We can associate URLs with HTMLs simply by leveraging the app.get() method, which will allow express to handle
+the underlying logic of the HTTP request/response cycle.
 
-This gives us a convenient place to store additional places if needed, and find paths if we need a reference.
-
-Having this all in one place adds to our readability score.
-
-## 3. Create the server
-
-The main block of this logic pertains to the HTTP request/response logic
-
-#### 1. Initialize web server
-
-in comparison to regular node.js, express will be handling all the work with passing HTTP and returning responses. So we use the app constant we created before to call it here with it's method "get"
+For each page we want to assign we set up a app.get.
 
 ```javascript
-app.get('*', (req, res) => {});
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
+app.get('/contact-me', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'contact-me.html'));
+});
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'about.html'));
+});
 ```
 
-app.get('\*') will tell express to handle all incoming HTTP requests and pass them along to the continueing function, thanks to the wildcart asterisk.
-
-Inside the arrow function we will handle the request/response (req, res) logic
-
-#### 2. Handle request objects.
-
-the req that we will be receiving will be the HTTP request object sent when a user inputs a url in their browser.
-e.g `http://localhost.3000/contact-me` will return an object including a url key and path value `/contact-me`
-
-For convenience we will handle this extraction in a constant
+And finally, we use a asterisk wildcart to handle any other requests and respond with our 404 page.
 
 ```javascript
-const requestedUrl = req.url;
+app.get('*', (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
 ```
 
-#### 3. search htmlFiles object for requested page
+Notice how multiple methods are chained.
 
-We can now look up the requested URL in the htmlFiles object, in order to get the corresponding HTML file path.
+res.status() and res.sendFile() are chained together to form a full response object.
+res status fills out the header of the response with a 404 status code, while sendFile
+attached the HTML to the response.
 
-```javascript
-const htmlFile = htmlFiles[requestedUrl] || './pages/404.html';
-```
+Simply put, express allows chaining together it's methods in order to form response objects to return!
+Thanks to this, all the stuff about creating our own HTTP request/response logic, initializing the web server
+handling request objects, searching htmlFiles arrays for the appropriate pages, reading the HTMLs
+, handling errors and finally sending the finished response object, is cut down to 27 lines of code!
 
-This will either return the corresponding file path, or the 404 page not found page we made.
-
-#### 4. Reading HTML
-
-We now have to read the HTML of the file we got earlier `htmlFile`
-
-This is where the fs module comes in to play, allowing us to read from the file system.
-
-We will construct the absolute path to the HTML file, by joining the current directory `__dirname`with the file path we got earlier. And read it using the fs.readFile method.
-
-```javascript
-fs.readFile(path.join(__dirname, htmlFile), (err, data) => {});
-```
-
-This will return one of two objects, an error (err) object, or a data object; the contents of the file.
-
-Using an arrow function, we can now process this file.
-
-#### 5. Handling errors first
-
-Handling errors first is a good idea, it'll allow us to cut the program short if anything has gone wrong and report it
-back as needed.
-
-So if readFile returned an err object, we can handle it by writing responding the 404.html file to the browser.
-
-```javascript
-if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-            fs.readFile(path.join(__dirname, '404.html'), (err, data) => {
-                if (err) {
-                    console.log(`Error reading file ${htmlFile}`);
-                    res.end('404 Not Found');
-                } else {
-                    console.log('serving 404 html');
-                    res.end(data);
-                }
-            });
-```
-
-I got some laughs when I presented this one.
-
-What happens here, is that if we were returned a err object, we will establish a response header with the HTTP code 404, and attempt to read the 404.html page.
-
-Having ANOTHER error conditional here will allow us to handle a case where 404.html may not exist for whatever reason, and gracefully add 404 Not found to the end of the HTTP response, and printing to console to alert a developer that something is wrong.
-
-It may seem overkill, solving an error for an error case, but it felt graceful to atleast cover this situation as well.
-
-If all goes well in reading a 404.html file, it exist, and we attach it to the end of the HTTP response, so the browser can display it.
-
-### Now lets handle an actual sucessful case.
-
-This one is pretty straight forward, if we were not returned an error object, then all went well finding the requested URLs corresponding file, so we can attach that to the end of the HTTP response.
-
-```javascript
-        } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-        }
-```
-
-So we write a header, with the HTTP code 200 OK response, and attached the data to the body. Off this goes to the requesting browser!
+(Note this is not a typo, I left in 6. just to clarify how many steps we handled in just the above code.)
 
 #### 6. Open the flood gates
 
-In order to actually receive requests, we need to tell our server to listen for them at the ports.
+In order to actually receive requests, we need to tell our app to listen for them at the ports.
 
 This can be any port, and for security reasons these would best be held in a .env file to prevent accidentally sending dangerous information to malicious outsiders. In this case though, it's a local host, just us playing around, so we will just use port 3000 to listen to a request locally.
 
@@ -252,7 +155,7 @@ This can be any port, and for security reasons these would best be held in a .en
 
 ```javascript
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 ```
@@ -274,17 +177,6 @@ Telling node to run the index.js file, and it's contents.
 ![terminal node index.js](./images/node.png)
 
 And now, we can visit `http://localhost:3000/`and request a page using the URL paths
-
-Remember our htmlFiles object?
-
-```javascript
-const htmlFiles = {
-    '/': './pages/index.html',
-    '/contact-me': './pages/contact-me.html',
-    '/about': './pages/about.html',
-    '/404': './pages/404.html',
-};
-```
 
 the index page (default path at url /)
 

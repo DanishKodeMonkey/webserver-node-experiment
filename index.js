@@ -1,48 +1,24 @@
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
+const path = require('path');
 const app = express();
 
-// Map up URL paths with corresponding file paths in an object.
+// use app.get to define routes to the appropriate pages
+// the express methods will be chained where appropriate.
 
-const htmlFiles = {
-    // URL path - File path
-    '/': './pages/index.html',
-    '/contact-me': './pages/contact-me.html',
-    '/about': './pages/about.html',
-    '/404': './pages/404.html',
-};
-
-// Create server
-app.get('*', (req, res) => {
-    // get request URL and matching HTML file
-    const requestedUrl = req.url;
-    const htmlFile = htmlFiles[requestedUrl] || './pages/404.html';
-
-    // Read the HTML file
-    fs.readFile(path.join(__dirname, htmlFile), (err, data) => {
-        if (err) {
-            // if file not found, serve 404.html
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-            fs.readFile(path.join(__dirname, '404.html'), (err, data) => {
-                // if even this fails, just write it
-                if (err) {
-                    console.log(`Error reading file ${htmlFile}`);
-                    res.end('404 Not Found');
-                } else {
-                    console.log('serving 404 html');
-                    // otherwise, serve 404.html
-                    res.send(data);
-                }
-            });
-        } else {
-            // serve the HTML file
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-        }
-    });
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
+app.get('/contact-me', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'contact-me.html'));
+});
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'about.html'));
 });
 
+// A catch all using asterisk wild cart for 404 responses.
+app.get('*', (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
 // start the server
 
 const PORT = process.env.PORT || 3000;
